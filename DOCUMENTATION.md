@@ -46,7 +46,7 @@ Serialize a model.
 
 ### Params:
 
-* **object** *opts* The options for serialization. Available properties: 
+* **object** *opts* The options for serialization. Available properties:
  - `{array=}` `attributes` The list of attributes to be serialized (default: all attributes).
  - `{array=}` `relationships` The list of relationships to be serialized (default: all relationships).
 
@@ -71,6 +71,15 @@ Set/add a relationships to a model.
 
 * **string** *relName* The name of the relationship.
 * **object** *models* The linked model(s).
+
+## setLink(linkName, value)
+
+Set/add an link to a model.
+
+### Params:
+
+* **string** *linkName* The name of the link.
+* **object** *value* The value of the link.
 
 ## JsonApiDataStore
 

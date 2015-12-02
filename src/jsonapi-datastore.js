@@ -139,6 +139,16 @@
     if (this[relName] === undefined) this._relationships.push(relName);
     this[relName] = models;
   }
+
+  /**
+   * Set/add an link to a model.
+   * @method setLink
+   * @param {string} linkName The name of the link.
+   * @param {string} value The value of the link.
+   */
+  setLink(linkName, value) {
+    this._links[linkName] = value;
+  }
 }
 
 /**
@@ -227,6 +237,10 @@ class JsonApiDataStore {
       model[key] = rec.attributes[key];
     }
 
+    if (rec.links) {
+      model._links = rec.links;
+    }
+
     if (rec.relationships) {
       for (key in rec.relationships) {
         var rel = rec.relationships[key];
@@ -245,7 +259,8 @@ class JsonApiDataStore {
           }
         }
         if (rel.links) {
-          console.log("Warning: Links not implemented yet.");
+          model._links = model._links || {};
+          model._links[key] = rel.links;
         }
       }
     }
