@@ -13,6 +13,8 @@
     this._attributes = [];
     this._dependents = [];
     this._relationships = [];
+    this._links = {};
+    this._relationshipLinks = {};
   }
 
   /**
@@ -79,6 +81,7 @@
    *
    *  - `{array=}` `attributes` The list of attributes to be serialized (default: all attributes).
    *  - `{array=}` `relationships` The list of relationships to be serialized (default: all relationships).
+   *  - `{array=}` `links` The list of links to be serialized (default: all links).
    * @return {object} JSONAPI-compliant object
    */
   serialize(opts) {
@@ -89,6 +92,7 @@
     opts = opts || {};
     opts.attributes = opts.attributes || this._attributes;
     opts.relationships = opts.relationships || this._relationships;
+    opts.links = opts.links || [];
 
     if (this.id !== undefined) res.data.id = this.id;
     if (opts.attributes.length !== 0) res.data.attributes = {};
@@ -113,7 +117,19 @@
           data: relationshipIdentifier(self[key])
         };
       }
+      if (self._relationshipLinks[key]) {
+       res.data.relationships[key].links = self._relationshipLinks[key];
+      }
     });
+
+    if (Object.keys(this._links).length !== 0) {
+      res.data.links = this._links;
+    }
+    if (opts.links.length !== 0) {
+      opts.links.forEach(function(key) {
+        res.data.links[key] = self._links[key];
+      });
+    }
 
     return res;
   }
@@ -138,16 +154,6 @@
   setRelationship(relName, models) {
     if (this[relName] === undefined) this._relationships.push(relName);
     this[relName] = models;
-  }
-
-  /**
-   * Set/add an link to a model.
-   * @method setLink
-   * @param {string} linkName The name of the link.
-   * @param {string} value The value of the link.
-   */
-  setLink(linkName, value) {
-    this._links[linkName] = value;
   }
 }
 
@@ -259,8 +265,7 @@ class JsonApiDataStore {
           }
         }
         if (rel.links) {
-          model._links = model._links || {};
-          model._links[key] = rel.links;
+          model._relationshipLinks[key] = rel.links;
         }
       }
     }

@@ -72,15 +72,6 @@ Set/add a relationships to a model.
 * **string** *relName* The name of the relationship.
 * **object** *models* The linked model(s).
 
-## setLink(linkName, value)
-
-Set/add an link to a model.
-
-### Params:
-
-* **string** *linkName* The name of the link.
-* **object** *value* The value of the link.
-
 ## JsonApiDataStore
 
 ## constructor()

@@ -131,6 +131,23 @@ describe('JsonApiDataModel', () => {
       let serializedArticle = article.serialize();
       expect(serializedArticle.data.relationships.author.data).to.be.null;
     });
+
+    it('should serialize links', () => {
+      let store = new JsonApiDataStore(),
+          payload = {
+            data: {
+              type: 'article',
+              id: 1337,
+              links: {
+                self: "http://example.com/articles/1337"
+              }
+            }
+          };
+
+      let article = store.sync(payload);
+      let serializedArticle = article.serialize();
+      expect(serializedArticle.data.links.self).to.eq("http://example.com/articles/1337");
+    });
   });
 
   describe('.setAttribute()', () => {
