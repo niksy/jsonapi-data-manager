@@ -231,7 +231,9 @@ class JsonApiDataStore {
       for (key in rec.relationships) {
         var rel = rec.relationships[key];
         if (rel.data !== undefined) {
-          model._relationships.push(key);
+          if (model._relationships.indexOf(key) === -1) {
+            model._relationships.push(key);
+          }
           if (rel.data === null) {
             model[key] = null;
           } else if (rel.data.constructor === Array) {
