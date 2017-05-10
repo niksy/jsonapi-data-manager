@@ -1,3 +1,7 @@
+**This fork contains various modifications based on pull requests.**
+
+---
+
 # jsonapi-datastore
 [![Build Status](https://travis-ci.org/beauby/jsonapi-datastore.svg)](https://travis-ci.org/beauby/jsonapi-datastore)
 
