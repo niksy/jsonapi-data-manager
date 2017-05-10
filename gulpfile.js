@@ -14,7 +14,7 @@ var gulp = require('gulp'),
 var SRC = 'src/jsonapi-datastore.js',
     DEST = 'dist/';
 
-gulp.task('build', ['jshint', 'jscs'], function() {
+gulp.task('build', function() {
   return gulp.src(SRC)
     .pipe(gulpbabel())
     .pipe(concat('jsonapi-datastore.js'))

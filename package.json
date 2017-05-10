@@ -1,6 +1,7 @@
 {
   "name": "jsonapi-datastore",
   "version": "0.4.0-beta",
+  "private": true,
   "description": "JavaScript client-side JSON API data handling made easy.",
   "main": "dist/node-jsonapi-datastore.js",
   "files": [
@@ -10,6 +11,8 @@
     "test": "test"
   },
   "scripts": {
+    "build": "gulp build build-angular build-node",
+    "prepublish": "npm run build",
     "test": "gulp test"
   },
   "repository": {
