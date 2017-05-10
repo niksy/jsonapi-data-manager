@@ -15,6 +15,7 @@ class JsonApiDataStoreModel {
     this._relationships = [];
     this._links = {};
     this._relationshipLinks = {};
+    this._destroyed = false;
   }
 
   /**
@@ -176,6 +177,7 @@ class JsonApiDataStore {
    */
   destroy(model) {
     var self = this;
+    model._destroyed = true;
     model._dependents.forEach(function(dependent, depIdx) {
       self.graph[dependent.type][dependent.id].removeRelationship(model._type, model.id, dependent.relation);
     });
