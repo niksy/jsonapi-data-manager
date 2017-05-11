@@ -148,6 +148,23 @@ describe('JsonApiDataModel', () => {
       let serializedArticle = article.serialize();
       expect(serializedArticle.data.links.self).to.eq("http://example.com/articles/1337");
     });
+
+    it('should serialize meta', () => {
+      let store = new JsonApiDataStore(),
+          payload = {
+            data: {
+              type: 'article',
+              id: 1337,
+              meta: {
+                count: 1
+              }
+            }
+          };
+
+      let article = store.sync(payload);
+      let serializedArticle = article.serialize();
+      expect(serializedArticle.data.meta.count).to.eq(1);
+    });
   });
 
   describe('.setAttribute()', () => {

@@ -113,29 +113,19 @@ Retrieve all models by type.
 
 Empty the store.
 
-## syncWithMeta(data)
+## sync(data, opts)
 
-Sync a JSONAPI-compliant payload with the store and return any metadata included in the payload
-
-### Params:
-
-* **object** *data* The JSONAPI payload
-
-### Return:
-
-* **object** The model/array of models corresponding to the payload's primary resource(s) and any metadata.
-
-## sync(data)
-
-Sync a JSONAPI-compliant payload with the store.
+Sync a JSONAPI-compliant payload with the store and return any top level properties included in the payload.
 
 ### Params:
 
 * **object** *data* The JSONAPI payload
+* **object** *opts* The options for sync. Available properties:
+ - `{boolean=}` `topLevel` Return top level properties (default: false).
 
 ### Return:
 
-* **object** The model/array of models corresponding to the payload's primary resource(s).
+* **object** The model/array of models corresponding to the payload's primary resource(s) and any top level properties.
 
 <!-- End src/jsonapi-datastore.js -->
 

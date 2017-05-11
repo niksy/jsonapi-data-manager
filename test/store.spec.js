@@ -236,9 +236,7 @@ describe('JsonApiDataStore', () => {
         expect(articleErrors[0].detail).to.eq('is too short (minimum is 3 characters)');
       });
     });
-  });
 
-  describe('.syncWithMeta()', () => {
     context('when given a simple payload with meta', () => {
       var store = new JsonApiDataStore(),
           payload = {
@@ -252,12 +250,12 @@ describe('JsonApiDataStore', () => {
           };
 
       it('should return the meta data', () => {
-        var result = store.syncWithMeta(payload);
+        var result = store.sync(payload, { topLevel: true });
         expect(result.meta.test).to.eq('abc');
       });
 
       it('should return the data', () => {
-        var result = store.syncWithMeta(payload);
+        var result = store.sync(payload, { topLevel: true });
         expect(result.data.id).to.eq(1337);
         expect(result.data._type).to.eq('article');
       });
@@ -273,12 +271,12 @@ describe('JsonApiDataStore', () => {
           };
 
       it('should return empty meta data', () => {
-        var result = store.syncWithMeta(payload);
-        expect(result.meta).to.deep.eq(null);
+        var result = store.sync(payload, { topLevel: true });
+        expect(result.meta).to.deep.eq(undefined);
       });
 
       it('should return the data', () => {
-        var result = store.syncWithMeta(payload);
+        var result = store.sync(payload, { topLevel: true });
         expect(result.data.id).to.eq(1337);
         expect(result.data._type).to.eq('article');
       });
@@ -296,8 +294,8 @@ describe('JsonApiDataStore', () => {
             };
 
         it('should return empty meta data when not setting meta key', () => {
-          var result = store.syncWithMeta(payload);
-          expect(result.meta).to.deep.eq(null);
+          var result = store.sync(payload, { topLevel: true });
+          expect(result.meta).to.deep.eq(undefined);
         });
 
       });

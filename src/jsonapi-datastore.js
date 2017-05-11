@@ -15,6 +15,8 @@ class JsonApiDataStoreModel {
     this._relationships = [];
     this._links = {};
     this._relationshipLinks = {};
+    this._meta = {};
+    this._relationshipMeta = {};
     this._destroyed = false;
   }
 
@@ -83,6 +85,7 @@ class JsonApiDataStoreModel {
    *  - `{array=}` `attributes` The list of attributes to be serialized (default: all attributes).
    *  - `{array=}` `relationships` The list of relationships to be serialized (default: all relationships).
    *  - `{array=}` `links` The list of links to be serialized (default: all links).
+   *  - `{array=}` `meta` The list of meta properties to be serialized (default: all meta properties).
    * @return {object} JSONAPI-compliant object
    */
   serialize(opts) {
@@ -94,6 +97,7 @@ class JsonApiDataStoreModel {
     opts.attributes = opts.attributes || this._attributes;
     opts.relationships = opts.relationships || this._relationships;
     opts.links = opts.links || [];
+    opts.meta = opts.meta || [];
 
     if (this.id !== undefined) res.data.id = this.id;
     if (opts.attributes.length !== 0) res.data.attributes = {};
@@ -121,6 +125,9 @@ class JsonApiDataStoreModel {
       if (self._relationshipLinks[key]) {
        res.data.relationships[key].links = self._relationshipLinks[key];
       }
+      if (self._relationshipMeta[key]) {
+       res.data.relationships[key].meta = self._relationshipMeta[key];
+      }
     });
 
     if (Object.keys(this._links).length !== 0) {
@@ -129,6 +136,15 @@ class JsonApiDataStoreModel {
     if (opts.links.length !== 0) {
       opts.links.forEach(function(key) {
         res.data.links[key] = self._links[key];
+      });
+    }
+
+    if (Object.keys(this._meta).length !== 0) {
+      res.data.meta = this._meta;
+    }
+    if (opts.meta.length !== 0) {
+      opts.meta.forEach(function(key) {
+        res.data.meta[key] = self._meta[key];
       });
     }
 
@@ -260,6 +276,10 @@ class JsonApiDataStore {
       model._links = rec.links;
     }
 
+    if (rec.meta) {
+      model._meta = rec.meta;
+    }
+
     if (rec.relationships) {
       for (key in rec.relationships) {
         var rel = rec.relationships[key];
@@ -280,6 +300,9 @@ class JsonApiDataStore {
         if (rel.links) {
           model._relationshipLinks[key] = rel.links;
         }
+        if (rel.meta) {
+          model._relationshipMeta[key] = rel.meta;
+        }
       }
     }
 
@@ -287,33 +310,40 @@ class JsonApiDataStore {
   }
 
   /**
-   * Sync a JSONAPI-compliant payload with the store and return any metadata included in the payload
-   * @method syncWithMeta
-   * @param {object} data The JSONAPI payload
-   * @return {object} The model/array of models corresponding to the payload's primary resource(s) and any metadata.
-   */
-  syncWithMeta(payload) {
-    var primary = payload.data,
-        syncRecord = this.syncRecord.bind(this);
-    if (!primary) return [];
-    if (payload.included) payload.included.map(syncRecord);
-    return {
-      data: (primary.constructor === Array) ? primary.map(syncRecord) : syncRecord(primary),
-      meta: ("meta" in payload) ? payload.meta : null
-    };
-  }
-
-  /**
-   * Sync a JSONAPI-compliant payload with the store.
+   * Sync a JSONAPI-compliant payload with the store and return any top level properties included in the payload
    * @method sync
    * @param {object} data The JSONAPI payload
-   * @return {object} The model/array of models corresponding to the payload's primary resource(s).
+   * @param {object} opts The options for sync. Available properties:
+   *
+   *  - `{boolean=}` `topLevel` Return top level properties (default: false).
+   * @return {object} The model/array of models corresponding to the payload's primary resource(s) and any top level properties.
    */
-  sync(payload) {
-    if (payload.errors) {
-      return { errors: payload.errors };
+  sync(payload, opts) {
+    var primary = payload.data,
+        syncRecord = this.syncRecord.bind(this),
+        opts = opts || {},
+        obj = {};
+    opts.topLevel = opts.topLevel || false;
+    if ("meta" in payload) {
+      obj.meta = payload.meta;
     }
-    return this.syncWithMeta(payload).data;
+    if ("links" in payload) {
+      obj.links = payload.links;
+    }
+    if ("jsonapi" in payload) {
+      obj.jsonapi = payload.jsonapi;
+    }
+    if (payload.errors) {
+      obj.errors = payload.errors;
+      return obj;
+    }
+    if (!primary) return [];
+    if (payload.included) payload.included.map(syncRecord);
+    obj.data = (primary.constructor === Array) ? primary.map(syncRecord) : syncRecord(primary);
+    if (opts.topLevel) {
+      return obj;
+    }
+    return obj.data;
   }
 }
 
