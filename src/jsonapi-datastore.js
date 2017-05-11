@@ -13,9 +13,9 @@ class JsonApiDataStoreModel {
     this._attributes = [];
     this._dependents = [];
     this._relationships = [];
-    this._links = {};
+    this._links = this.links = {};
     this._relationshipLinks = {};
-    this._meta = {};
+    this._meta = this.meta = {};
     this._relationshipMeta = {};
     this._destroyed = false;
   }
@@ -96,8 +96,8 @@ class JsonApiDataStoreModel {
     opts = opts || {};
     opts.attributes = opts.attributes || this._attributes;
     opts.relationships = opts.relationships || this._relationships;
-    opts.links = opts.links || [];
-    opts.meta = opts.meta || [];
+    opts.links = opts.links || undefined;
+    opts.meta = opts.meta || undefined;
 
     if (this.id !== undefined) res.data.id = this.id;
     if (opts.attributes.length !== 0) res.data.attributes = {};
@@ -131,21 +131,25 @@ class JsonApiDataStoreModel {
     });
 
     if (Object.keys(this._links).length !== 0) {
-      res.data.links = this._links;
-    }
-    if (opts.links.length !== 0) {
-      opts.links.forEach(function(key) {
-        res.data.links[key] = self._links[key];
-      });
+      if (opts.links === undefined) {
+        res.data.links = this._links;
+      } else if (opts.links && opts.links.length !== 0) {
+        res.data.links = {};
+        opts.links.forEach(function(key) {
+          res.data.links[key] = self._links[key];
+        });
+      }
     }
 
     if (Object.keys(this._meta).length !== 0) {
-      res.data.meta = this._meta;
-    }
-    if (opts.meta.length !== 0) {
-      opts.meta.forEach(function(key) {
-        res.data.meta[key] = self._meta[key];
-      });
+      if (opts.meta === undefined) {
+        res.data.meta = this._meta;
+      } else if (opts.meta && opts.meta.length !== 0) {
+        res.data.meta = {};
+        opts.meta.forEach(function(key) {
+          res.data.meta[key] = self._meta[key];
+        });
+      }
     }
 
     return res;
@@ -273,11 +277,11 @@ class JsonApiDataStore {
     }
 
     if (rec.links) {
-      model._links = rec.links;
+      model._links = model.links = rec.links;
     }
 
     if (rec.meta) {
-      model._meta = rec.meta;
+      model._meta = model.meta = rec.meta;
     }
 
     if (rec.relationships) {
