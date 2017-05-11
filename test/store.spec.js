@@ -1,12 +1,12 @@
 var fs = require('fs'),
     expect = require('chai').expect;
 
-import {JsonApiDataStore} from '../src/jsonapi-datastore.js';
+import {Store} from '../src/jsonapi-datastore.js';
 
-describe('JsonApiDataStore', () => {
+describe('Store', () => {
   describe('.sync()', () => {
     context('when given a simple payload', () => {
-      var store = new JsonApiDataStore(),
+      var store = new Store(),
           payload = {
             data: {
               type: 'article',
@@ -36,7 +36,7 @@ describe('JsonApiDataStore', () => {
     });
 
     context('when given a payload with simple attributes', () => {
-      var store = new JsonApiDataStore(),
+      var store = new Store(),
           payload = {
             data: {
               type: 'article',
@@ -62,7 +62,7 @@ describe('JsonApiDataStore', () => {
     });
 
     context('when given a payload with multiple resources', () => {
-      var store = new JsonApiDataStore(),
+      var store = new Store(),
           payload = {
             data: [{
               type: 'article',
@@ -88,7 +88,7 @@ describe('JsonApiDataStore', () => {
     });
 
     context('when given a payload with relationships', () => {
-      var store = new JsonApiDataStore(),
+      var store = new Store(),
           payload = {
             data: {
               type: 'article',
@@ -140,7 +140,7 @@ describe('JsonApiDataStore', () => {
     });
 
     context('when given a payload with included relationships', () => {
-      var store = new JsonApiDataStore(),
+      var store = new Store(),
           payload = {
             data: {
               type: 'article',
@@ -173,7 +173,7 @@ describe('JsonApiDataStore', () => {
     });
 
     context('when given a payload with mutual references', () => {
-      var store = new JsonApiDataStore(),
+      var store = new Store(),
           payload = {
             data: [{
               type: 'article',
@@ -214,7 +214,7 @@ describe('JsonApiDataStore', () => {
     });
 
     context('when given a payload with errors', () => {
-      var store = new JsonApiDataStore(),
+      var store = new Store(),
         payload = {
           errors: [
             {
@@ -238,7 +238,7 @@ describe('JsonApiDataStore', () => {
     });
 
     context('when given a simple payload with meta', () => {
-      var store = new JsonApiDataStore(),
+      var store = new Store(),
           payload = {
             data: {
               type: 'article',
@@ -262,7 +262,7 @@ describe('JsonApiDataStore', () => {
     });
 
     context('when given a simple payload without meta', () => {
-      var store = new JsonApiDataStore(),
+      var store = new Store(),
           payload = {
             data: {
               type: 'article',
@@ -282,7 +282,7 @@ describe('JsonApiDataStore', () => {
       });
 
       context('when given a simple payload with meta as different key', () => {
-        var store = new JsonApiDataStore(),
+        var store = new Store(),
             payload = {
               data: {
                 type: 'article',
@@ -303,7 +303,7 @@ describe('JsonApiDataStore', () => {
   });
 
   describe('.reset()', () => {
-    var store = new JsonApiDataStore(),
+    var store = new Store(),
         payload = {
           data: {
             type: 'article',
@@ -325,7 +325,7 @@ describe('JsonApiDataStore', () => {
   });
 
   describe('.find()', () => {
-    var store = new JsonApiDataStore(),
+    var store = new Store(),
         payload = {
           data: [
             {
@@ -359,7 +359,7 @@ describe('JsonApiDataStore', () => {
   });
 
   describe('.findAll()', () => {
-    var store = new JsonApiDataStore(),
+    var store = new Store(),
         payload = {
           data: [
             {
@@ -395,7 +395,7 @@ describe('JsonApiDataStore', () => {
   });
 
   describe('.destroy()', () => {
-    var store = new JsonApiDataStore(),
+    var store = new Store(),
         payload = {
             data: [{
               type: 'article',

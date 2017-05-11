@@ -1,7 +1,7 @@
 /**
- * @class JsonApiDataStoreModel
+ * @class Model
  */
-class JsonApiDataStoreModel {
+class Model {
   /**
    * @method constructor
    * @param {string} type The type of the model.
@@ -179,9 +179,9 @@ class JsonApiDataStoreModel {
 }
 
 /**
- * @class JsonApiDataStore
+ * @class Store
  */
-class JsonApiDataStore {
+class Store {
   /**
    * @method constructor
    */
@@ -242,7 +242,7 @@ class JsonApiDataStore {
   initModel(type, id) {
     this.graph[type] = this.graph[type] || {};
     this.order[type] = this.order[type] || [];
-    this.graph[type][id] = this.graph[type][id] || new JsonApiDataStoreModel(type, id);
+    this.graph[type][id] = this.graph[type][id] || new Model(type, id);
     var currentOrderIndex = this.order[type].indexOf(id);
     if(currentOrderIndex === -1) {
       this.order[type].push(id);
@@ -351,9 +351,5 @@ class JsonApiDataStore {
   }
 }
 
-if ('undefined' !== typeof module) {
-  module.exports = {
-    JsonApiDataStore: JsonApiDataStore,
-    JsonApiDataStoreModel: JsonApiDataStoreModel
-  };
-}
+module.exports.Store = Store;
+module.exports.Model = Model;

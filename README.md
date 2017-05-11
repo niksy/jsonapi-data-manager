@@ -39,19 +39,19 @@ $ npm install jsonapi-datastore
 
 Just call the `.sync()` method of your store.
 ```javascript
-var store = new JsonApiDataStore();
+var store = new Store();
 store.sync(data);
 ```
 This parses the data and incorporates it in the store, taking care of already existing records (by updating them) and relationships.
 
-## Parsing with meta data
+### Parsing with top level data
 
-If you have meta data in your payload use the `.syncWithMeta` method of your store.
+If you have top level data in your payload use the `.sync` method of your store with `topLevel` property.
 ```javascript
-var store = new JsonApiDataStore();
-store.syncWithMeta(data);
+var store = new Store();
+store.sync(data, {topLevel: true});
 ```
-This does everything that `.sync()` does, but returns an object with data and meta split.
+This does everything that `.sync()` does, but returns an object with top level properties split.
 
 ## Retrieving models
 
@@ -79,8 +79,9 @@ console.log(article.serialize());
 ## Examples
 
 ```javascript
+var Store = require('jsonapi-datastore').Store;
 // Create a store:
-var store = new JsonApiDataStore();
+var store = new Store();
 
 // Then, given the following payload, containing two `articles`, with a related `user` who is the author of both:
 var payload = {
@@ -155,36 +156,6 @@ console.log(article.serialize({ attributes: ['title'], relationships: []}));
 ## Documentation
 
 See [DOCUMENTATION.md](DOCUMENTATION.md).
-
-## What's missing
-
-Currently, the store does not handle `links` attributes or resource-level or relationship-level meta.
-
-## Notes
-
-### AngularJS
-
-jsonapi-datastore is bundled with an AngularJs wrapper. Just include `ng-jsonapi-datastore.js` in your `index.html` and require the module `beauby.jsonApiDataStore` in your application.
-You can then use the `JsonApiDataStore` factory, which is essentially defined as follows:
-```javascript
-{
-  store: new JsonApiDataStore(),
-  Model: JsonApiDataStoreModel
-}
-```
-so that you can use it as follows:
-
-```javascript
-angular
-  .module('myApp')
-  .controller('myController', function(JsonApiDataStore) {
-    var article = JsonApiDataStore.store.find('article', 1337);
-    var newArticle = new JsonApiDataStore.Model('article');
-    newArticle.setAttribute('title', 'My cool article');
-    console.log(newArticle.serialize());
-  });
-```
-
 
 ## Contributing
 

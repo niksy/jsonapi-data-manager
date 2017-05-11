@@ -2,7 +2,7 @@
 
 <!-- Start src/jsonapi-datastore.js -->
 
-## JsonApiDataStoreModel
+## Model
 
 ## constructor(type, id)
 
@@ -72,7 +72,7 @@ Set/add a relationships to a model.
 * **string** *relName* The name of the relationship.
 * **object** *models* The linked model(s).
 
-## JsonApiDataStore
+## Store
 
 ## constructor()
 
