@@ -88,7 +88,7 @@ var Model = (function () {
       self._removeDependence(type, id);
       if (self[relName].constructor === Array) {
         self[relName].forEach(function (val, idx) {
-          if (val.id === id && val.type === type) {
+          if (val.id === id && val._type === type) {
             self[relName].splice(idx, 1);
           }
         });
@@ -337,7 +337,7 @@ var Store = (function () {
               model[key] = null;
             } else if (rel.data.constructor === Array) {
               model[key] = rel.data.map(findOrInit);
-              model[key].forEach(function (record, key) {
+              model[key].forEach(function (record) {
                 record._addDependence(model._type, model.id, key);
               });
             } else {
