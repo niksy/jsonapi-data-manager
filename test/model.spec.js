@@ -236,6 +236,17 @@ describe('Model', () => {
         article.setRelationship('author', user2);
         expect(article._relationships.filter(function(val) { return val == 'author'; }).length).to.eq(1);
       });
+
+      it('should push relationship to the list of relationships', () => {
+        let user1 = new Model('user', 13),
+            user2 = new Model('user', 14);
+        let article = new Model('article');
+        article.setRelationship('author', []);
+        article.setRelationship('author', user1);
+        article.setRelationship('author', user2);
+        expect(Array.isArray(article.author)).to.eq(true);
+        expect(article.author.length).to.eq(2);
+      });
     });
   });
 });

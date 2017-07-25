@@ -199,8 +199,15 @@ var Model = (function () {
   }, {
     key: "setRelationship",
     value: function setRelationship(relName, models) {
-      if (this[relName] === undefined) this._relationships.push(relName);
-      this[relName] = models;
+      var self = this;
+      if (self[relName] === undefined) {
+        self._relationships.push(relName);
+        self[relName] = models;
+      } else if (self[relName].constructor === Array) {
+        self[relName].push(models);
+      } else {
+        self[relName] = models;
+      }
     }
   }]);
 
