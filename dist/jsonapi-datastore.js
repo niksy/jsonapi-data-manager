@@ -1,11 +1,19 @@
-/**
- * @class Model
- */
 "use strict";
 
 var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function arrayFind(arr, cb) {
+  if (!Array.prototype.find) {
+    return arr.filter(cb).shift();
+  }
+  return arr.find(cb);
+}
+
+/**
+ * @class Model
+ */
 
 var Model = (function () {
   /**
@@ -47,7 +55,7 @@ var Model = (function () {
       var self = this,
           found;
 
-      found = self._dependents.find(function (dependent) {
+      found = arrayFind(self._dependents, function (dependent) {
         return dependent.id === id && dependent.type === type && dependent.relation === key;
       });
       if (found === undefined) {

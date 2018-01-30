@@ -1,3 +1,10 @@
+function arrayFind(arr, cb) {
+  if (!Array.prototype.find) {
+    return arr.filter(cb).shift();
+  }
+  return arr.find(cb);
+}
+
 /**
  * @class Model
  */
@@ -31,7 +38,7 @@ class Model {
     var self = this,
       found;
 
-    found = self._dependents.find(function(dependent) {
+    found = arrayFind(self._dependents, function(dependent) {
       return dependent.id === id && dependent.type === type && dependent.relation === key;
     });
     if (found === undefined) {
