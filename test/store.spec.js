@@ -292,29 +292,29 @@ describe('Store', function () {
 				expect(result.data.id).to.eq(1337);
 				expect(result.data._type).to.eq('article');
 			});
-
-			context(
-				'when given a simple payload with meta as different key',
-				function () {
-					const store = new Store();
-					const payload = {
-						data: {
-							type: 'article',
-							id: 1337
-						},
-						metadata: {
-							test: 'abc'
-						}
-					};
-
-					it('should return empty meta data when not setting meta key', function () {
-						/* eslint-disable no-undefined */
-						const result = store.sync(payload, { topLevel: true });
-						expect(result.meta).to.deep.eq(undefined);
-					});
-				}
-			);
 		});
+
+		context(
+			'when given a simple payload with meta as different key',
+			function () {
+				const store = new Store();
+				const payload = {
+					data: {
+						type: 'article',
+						id: 1337
+					},
+					metadata: {
+						test: 'abc'
+					}
+				};
+
+				it('should return empty meta data when not setting meta key', function () {
+					/* eslint-disable no-undefined */
+					const result = store.sync(payload, { topLevel: true });
+					expect(result.meta).to.deep.eq(undefined);
+				});
+			}
+		);
 	});
 
 	describe('.reset()', function () {

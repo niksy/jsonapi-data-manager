@@ -1,20 +1,11 @@
-/* eslint-disable guard-for-in, no-loop-func, no-undefined */
-
-function arrayFind(array, callback) {
-	if (!Array.prototype.find) {
-		return array.find(callback);
-	}
-	return array.find(callback);
+function hasOwnProperty_(object, key) {
+	return Object.prototype.hasOwnProperty.call(object, key);
 }
 
-/**
- * @class Model
- */
 class Model {
 	/**
-	 * @function constructor
-	 * @param {string} type - The type of the model.
-	 * @param {string} id - The id of the model.
+	 * @param {string} type
+	 * @param {string} id
 	 */
 	constructor(type, id) {
 		this.id = id;
@@ -30,18 +21,12 @@ class Model {
 	}
 
 	/**
-	 * Add a dependent to a model.
-	 *
-	 * @function _addDependence
-	 * @param {string} type - The type of the dependent model.
-	 * @param {string} id - The id of the dependent model.
-	 * @param {string} key - The name of the relation found on the dependent model.
+	 * @param {string} type
+	 * @param {string} id
+	 * @param {string} key
 	 */
 	_addDependence(type, id, key) {
-		var self = this;
-		var found;
-
-		found = arrayFind(self._dependents, function (dependent) {
+		const found = this._dependents.find((dependent) => {
 			return (
 				dependent.id === id &&
 				dependent.type === type &&
@@ -49,187 +34,167 @@ class Model {
 			);
 		});
 		if (typeof found === 'undefined') {
-			self._dependents.push({ id: id, type: type, relation: key });
+			this._dependents.push({ id: id, type: type, relation: key });
 		}
 	}
 
 	/**
-	 * Removes a dependent from a model.
-	 *
-	 * @function _removeDependence
-	 * @param {string} type - The type of the dependent model.
-	 * @param {string} id - The id of the dependent model.
+	 * @param {string} type
+	 * @param {string} id
 	 */
 	_removeDependence(type, id) {
-		var self = this;
-		var found;
-
-		self._dependents.forEach(function (value, index) {
+		this._dependents.forEach((value, index) => {
 			if (value.id === id && value.type === type) {
-				self._dependents.splice(index, 1);
+				this._dependents.splice(index, 1);
 			}
 		});
 	}
 
 	/**
-	 * Removes a relationship from a model.
-	 *
-	 * @function removeRelationship
-	 * @param {string} type - The type of the dependent model.
-	 * @param {string} id - The id of the dependent model.
-	 * @param {string} relName - The name of the relationship.
+	 * @param {string} type
+	 * @param {string} id
+	 * @param {string} relationshipName
 	 */
-	removeRelationship(type, id, relName) {
-		var self = this;
-		self._removeDependence(type, id);
-		if (self[relName].constructor === Array) {
-			self[relName].forEach(function (value, index) {
+	removeRelationship(type, id, relationshipName) {
+		this._removeDependence(type, id);
+		if (Array.isArray(this[relationshipName])) {
+			this[relationshipName].forEach((value, index) => {
 				if (value.id === id && value._type === type) {
-					self[relName].splice(index, 1);
+					this[relationshipName].splice(index, 1);
 				}
 			});
-		} else if (self[relName].id === id) {
-			self[relName] = null;
+		} else if (this[relationshipName].id === id) {
+			this[relationshipName] = null;
 		}
 	}
 
 	/**
-	 * Serialize a model.
+	 * @param {object} options
+	 * @param {Array} options.attributes
+	 * @param {Array} options.relationships
+	 * @param {Array} options.links
+	 * @param {Array} options.meta
 	 *
-	 * @function serialize
-	 * @param {object} options - The options for serialization.  Available properties:
-	 *
-	 * - `{array=}` `attributes` The list of attributes to be serialized (default: all attributes).
-	 * - `{array=}` `relationships` The list of relationships to be serialized (default: all relationships).
-	 * - `{array=}` `links` The list of links to be serialized (default: all links).
-	 * - `{array=}` `meta` The list of meta properties to be serialized (default: all meta properties).
-	 *
-	 * @returns {object} JSONAPI-compliant object.
+	 * @returns {object}
 	 */
-	serialize(options) {
-		var self = this;
-		var res = { data: { type: this._type } };
-		var key;
+	serialize(options = {}) {
+		const relationshipIdentifier = (model) => {
+			return { type: model._type, id: model.id };
+		};
 
-		options = options || {};
-		options.attributes = options.attributes || this._attributes;
-		options.relationships = options.relationships || this._relationships;
-		options.links = options.links || undefined;
-		options.meta = options.meta || undefined;
+		const response = { data: { type: this._type } };
+		const {
+			attributes = this._attributes,
+			relationships = this._relationships,
+			links,
+			meta
+		} = options;
 
-		if (typeof this.id !== 'undefined') res.data.id = this.id;
-		if (options.attributes.length !== 0) res.data.attributes = {};
-		if (options.relationships.length !== 0) res.data.relationships = {};
+		if (typeof this.id !== 'undefined') {
+			response.data.id = this.id;
+		}
+		if (attributes.length !== 0) {
+			response.data.attributes = {};
+		}
+		if (relationships.length !== 0) {
+			response.data.relationships = {};
+		}
 
-		options.attributes.forEach(function (key) {
-			res.data.attributes[key] = self[key];
+		attributes.forEach((key) => {
+			response.data.attributes[key] = this[key];
 		});
 
-		options.relationships.forEach(function (key) {
-			function relationshipIdentifier(model) {
-				return { type: model._type, id: model.id };
-			}
-			if (!self[key]) {
-				res.data.relationships[key] = { data: null };
-			} else if (self[key].constructor === Array) {
-				res.data.relationships[key] = {
-					data: self[key].map(relationshipIdentifier)
+		relationships.forEach((key) => {
+			if (!this[key]) {
+				response.data.relationships[key] = { data: null };
+			} else if (Array.isArray(this[key])) {
+				response.data.relationships[key] = {
+					data: this[key].map((relationship) =>
+						relationshipIdentifier(relationship)
+					)
 				};
 			} else {
-				res.data.relationships[key] = {
-					data: relationshipIdentifier(self[key])
+				response.data.relationships[key] = {
+					data: relationshipIdentifier(this[key])
 				};
 			}
-			if (self._relationshipLinks[key]) {
-				res.data.relationships[key].links =
-					self._relationshipLinks[key];
+			if (this._relationshipLinks[key]) {
+				response.data.relationships[
+					key
+				].links = this._relationshipLinks[key];
 			}
-			if (self._relationshipMeta[key]) {
-				res.data.relationships[key].meta = self._relationshipMeta[key];
+			if (this._relationshipMeta[key]) {
+				response.data.relationships[key].meta = this._relationshipMeta[
+					key
+				];
 			}
 		});
 
 		if (Object.keys(this._links).length !== 0) {
-			if (typeof options.links === 'undefined') {
-				res.data.links = this._links;
-			} else if (options.links && options.links.length !== 0) {
-				res.data.links = {};
-				options.links.forEach(function (key) {
-					res.data.links[key] = self._links[key];
+			if (typeof links === 'undefined') {
+				response.data.links = this._links;
+			} else if (Array.isArray(links) && links.length !== 0) {
+				response.data.links = {};
+				links.forEach((key) => {
+					response.data.links[key] = this._links[key];
 				});
 			}
 		}
 
 		if (Object.keys(this._meta).length !== 0) {
-			if (typeof options.meta === 'undefined') {
-				res.data.meta = this._meta;
-			} else if (options.meta && options.meta.length !== 0) {
-				res.data.meta = {};
-				options.meta.forEach(function (key) {
-					res.data.meta[key] = self._meta[key];
+			if (typeof meta === 'undefined') {
+				response.data.meta = this._meta;
+			} else if (Array.isArray(meta) && meta.length !== 0) {
+				response.data.meta = {};
+				meta.forEach((key) => {
+					response.data.meta[key] = this._meta[key];
 				});
 			}
 		}
 
-		return res;
+		return response;
 	}
 
 	/**
-	 * Set/add an attribute to a model.
-	 *
-	 * @function setAttribute
-	 * @param {string} attributeName - The name of the attribute.
-	 * @param {object} value - The value of the attribute.
+	 * @param {string} attributeName
+	 * @param {*} value
 	 */
 	setAttribute(attributeName, value) {
-		if (typeof this[attributeName] === 'undefined')
+		if (typeof this[attributeName] === 'undefined') {
 			this._attributes.push(attributeName);
+		}
 		this[attributeName] = value;
 	}
 
 	/**
-	 * Set/add a relationships to a model.
-	 *
-	 * @function setRelationship
-	 * @param {string} relName - The name of the relationship.
-	 * @param {object} models - The linked model(s).
+	 * @param {string} relationshipName
+	 * @param {Model[]} models
 	 */
-	setRelationship(relName, models) {
-		var self = this;
-		if (typeof self[relName] === 'undefined') {
-			self._relationships.push(relName);
-			self[relName] = models;
-		} else if (self[relName].constructor === Array) {
-			self[relName].push(models);
+	setRelationship(relationshipName, models) {
+		if (typeof this[relationshipName] === 'undefined') {
+			this._relationships.push(relationshipName);
+			this[relationshipName] = models;
+		} else if (Array.isArray(this[relationshipName])) {
+			this[relationshipName].push(models);
 		} else {
-			self[relName] = models;
+			this[relationshipName] = models;
 		}
 	}
 }
 
-/**
- * @class Store
- */
 class Store {
-	/**
-	 * @function constructor
-	 */
 	constructor() {
 		this.graph = {};
 		this.order = {};
 	}
 
 	/**
-	 * Remove a model from the store.
-	 *
-	 * @function destroy
-	 * @param {object} model - The model to destroy.
+	 * @param {Model} model
 	 */
 	destroy(model) {
-		var self = this;
 		model._destroyed = true;
-		model._dependents.forEach(function (dependent, depIndex) {
-			self.graph[dependent.type][dependent.id].removeRelationship(
+		model._dependents.forEach((dependent) => {
+			this.graph[dependent.type][dependent.id].removeRelationship(
 				model._type,
 				model.id,
 				dependent.relation
@@ -243,49 +208,48 @@ class Store {
 	}
 
 	/**
-	 * Retrieve a model by type and id. Constant-time lookup.
+	 * @param {string} type
+	 * @param {string} id
 	 *
-	 * @function find
-	 * @param {string} type - The type of the model.
-	 * @param {string} id - The id of the model.
-	 * @returns {object} The corresponding model if present, and null otherwise.
+	 * @returns {?Model}
 	 */
 	find(type, id) {
-		if (!this.graph[type] || !this.graph[type][id]) return null;
+		if (!this.graph[type] || !this.graph[type][id]) {
+			return null;
+		}
 		return this.graph[type][id];
 	}
 
 	/**
-	 * Retrieve all models by type.
+	 * @param {string} type
 	 *
-	 * @function findAll
-	 * @param {string} type - The type of the model.
-	 * @returns {object} Array of the corresponding model if present, and empty array otherwise.
+	 * @returns {Model[]}
 	 */
 	findAll(type) {
-		var self = this;
-
-		if (!this.graph[type]) return [];
-		return self.order[type].map(function (modelId) {
-			return self.graph[type][modelId];
-		});
+		if (!this.graph[type]) {
+			return [];
+		}
+		return this.order[type].map((modelId) => this.graph[type][modelId]);
 	}
 
-	/**
-	 * Empty the store.
-	 *
-	 * @function reset
-	 */
 	reset() {
 		this.graph = {};
 		this.order = {};
 	}
 
+	/**
+	 * @param  {string} type
+	 * @param  {string} id
+	 *
+	 * @returns {Model}
+	 */
 	initModel(type, id) {
 		this.graph[type] = this.graph[type] || {};
 		this.order[type] = this.order[type] || [];
 		this.graph[type][id] = this.graph[type][id] || new Model(type, id);
-		let currentOrderIndex = this.order[type].indexOf(id);
+
+		const currentOrderIndex = this.order[type].indexOf(id);
+
 		if (currentOrderIndex === -1) {
 			this.order[type].push(id);
 		} else {
@@ -296,63 +260,81 @@ class Store {
 		return this.graph[type][id];
 	}
 
-	syncRecord(rec) {
-		var self = this;
-		var model = this.initModel(rec.type, rec.id);
-		var key;
+	/**
+	 * @param  {object} record
+	 *
+	 * @returns {Model}
+	 */
+	syncRecord(record) {
+		const model = this.initModel(record.type, record.id);
 
-		function findOrInit(resource) {
-			if (!self.find(resource.type, resource.id)) {
-				let placeHolderModel = self.initModel(
+		const findOrInit = (resource) => {
+			if (!this.find(resource.type, resource.id)) {
+				const placeHolderModel = this.initModel(
 					resource.type,
 					resource.id
 				);
 				placeHolderModel._placeHolder = true;
 			}
-			return self.graph[resource.type][resource.id];
-		}
+			return this.graph[resource.type][resource.id];
+		};
 
 		delete model._placeHolder;
 
-		for (key in rec.attributes) {
-			if (model._attributes.indexOf(key) === -1) {
-				model._attributes.push(key);
+		for (const key in record.attributes) {
+			if (hasOwnProperty_(record.attributes, key)) {
+				const attribute = record.attributes[key];
+				if (model._attributes.indexOf(key) === -1) {
+					model._attributes.push(key);
+				}
+				model[key] = attribute;
 			}
-			model[key] = rec.attributes[key];
 		}
 
-		if (rec.links) {
-			model._links = model.links = rec.links;
+		if (record.links) {
+			model._links = model.links = record.links;
 		}
 
-		if (rec.meta) {
-			model._meta = model.meta = rec.meta;
+		if (record.meta) {
+			model._meta = model.meta = record.meta;
 		}
 
-		if (rec.relationships) {
-			for (key in rec.relationships) {
-				let rel = rec.relationships[key];
-				if (typeof rel.data !== 'undefined') {
-					if (model._relationships.indexOf(key) === -1) {
-						model._relationships.push(key);
+		if (record.relationships) {
+			for (const key in record.relationships) {
+				if (hasOwnProperty_(record.relationships, key)) {
+					const relationship = record.relationships[key];
+					if (typeof relationship.data !== 'undefined') {
+						if (model._relationships.indexOf(key) === -1) {
+							model._relationships.push(key);
+						}
+						if (relationship.data === null) {
+							model[key] = null;
+						} else if (Array.isArray(relationship.data)) {
+							model[key] = relationship.data.map((relationship) =>
+								findOrInit(relationship)
+							);
+							model[key].forEach((record) => {
+								record._addDependence(
+									model._type,
+									model.id,
+									key
+								);
+							});
+						} else {
+							model[key] = findOrInit(relationship.data);
+							model[key]._addDependence(
+								model._type,
+								model.id,
+								key
+							);
+						}
 					}
-					if (rel.data === null) {
-						model[key] = null;
-					} else if (rel.data.constructor === Array) {
-						model[key] = rel.data.map(findOrInit);
-						model[key].forEach(function (record) {
-							record._addDependence(model._type, model.id, key);
-						});
-					} else {
-						model[key] = findOrInit(rel.data);
-						model[key]._addDependence(model._type, model.id, key);
+					if (relationship.links) {
+						model._relationshipLinks[key] = relationship.links;
 					}
-				}
-				if (rel.links) {
-					model._relationshipLinks[key] = rel.links;
-				}
-				if (rel.meta) {
-					model._relationshipMeta[key] = rel.meta;
+					if (relationship.meta) {
+						model._relationshipMeta[key] = relationship.meta;
+					}
 				}
 			}
 		}
@@ -361,44 +343,59 @@ class Store {
 	}
 
 	/**
-	 * Sync a JSONAPI-compliant payload with the store and return any top level properties included in the payload.
+	 * @param {object} payload
+	 * @param {object} options
+	 * @param {boolean} options.topLevel
 	 *
-	 * @function sync
-	 * @param {object} payload - The JSONAPI payload.
-	 * @param {object} options - The options for sync. Available properties:
-	 *
-	 * - `{boolean=}` `topLevel` Return top level properties (default: false).
-	 * @returns {object} The model/array of models corresponding to the payload's primary resource(s) and any top level properties.
+	 * @returns {object}
 	 */
-	sync(payload, options) {
-		var primary = payload.data;
-		var syncRecord = this.syncRecord.bind(this);
-		var object = {};
-		options = options || {};
-		options.topLevel = options.topLevel || false;
-		if ('meta' in payload) {
-			object.meta = payload.meta;
+	sync(payload = {}, options = {}) {
+		const { data, meta, links, jsonapi, errors, included } = payload;
+		const { topLevel = false } = options;
+		const response = {};
+
+		if (typeof meta !== 'undefined') {
+			response.meta = meta;
 		}
-		if ('links' in payload) {
-			object.links = payload.links;
+
+		if (typeof links !== 'undefined') {
+			response.links = links;
 		}
-		if ('jsonapi' in payload) {
-			object.jsonapi = payload.jsonapi;
+
+		if (typeof jsonapi !== 'undefined') {
+			response.jsonapi = jsonapi;
 		}
-		if (payload.errors) {
-			object.errors = payload.errors;
-			return object;
+
+		if (typeof errors !== 'undefined') {
+			response.errors = errors;
+			return response;
 		}
-		if (!primary) return [];
-		if (payload.included) payload.included.map(syncRecord);
-		object.data =
-			primary.constructor === Array
-				? primary.map(syncRecord)
-				: syncRecord(primary);
-		if (options.topLevel) {
-			return object;
+
+		if (typeof data === 'undefined') {
+			return [];
 		}
-		return object.data;
+
+		if (typeof included !== 'undefined') {
+			if (Array.isArray(included)) {
+				included.forEach((record) => {
+					this.syncRecord(record);
+				});
+			}
+		}
+
+		if (typeof data !== 'undefined') {
+			if (Array.isArray(data)) {
+				response.data = data.map((record) => this.syncRecord(record));
+			} else {
+				response.data = this.syncRecord(data);
+			}
+		}
+
+		if (topLevel) {
+			return response;
+		}
+
+		return response.data;
 	}
 }
 

@@ -208,49 +208,49 @@ Removes a dependent from a model.
 | `type`   | `string` | The type of the dependent model. |
 | `id`     | `string` | The id of the dependent model.   |
 
-### Model#removeRelationship(type, id, relName)
+### Model#removeRelationship(type, id, relationshipName)
 
 Removes a relationship from a model.
 
-| Property  | Type     | Description                      |
-| --------- | -------- | -------------------------------- |
-| `type`    | `string` | The type of the dependent model. |
-| `id`      | `string` | The id of the dependent model.   |
-| `relName` | `string` | The name of the relationship.    |
+| Property           | Type     | Description                      |
+| ------------------ | -------- | -------------------------------- |
+| `type`             | `string` | The type of the dependent model. |
+| `id`               | `string` | The id of the dependent model.   |
+| `relationshipName` | `string` | The name of the relationship.    |
 
-### Model#serialize(opts)
+### Model#serialize(options)
 
 Serialize a model.
 
-| Property                      | Type     | Description                                       |
-| ----------------------------- | -------- | ------------------------------------------------- |
-| `opts`                        | `Object` | The options for serialization.                    |
-| `otps.attributes`             | `Array`  | The list of attributes to be serialized (default: |
-| all attributes)               |
-| `opts.relationships`          | `Array`  | The list of relationships to be serialized        |
-| (default: all relationships). |
+| Property                | Type     | Default           | Description                                 |
+| ----------------------- | -------- | ----------------- | ------------------------------------------- |
+| `options`               | `object` |                   | The options for serialization.              |
+| `options.attributes`    | `Array`  | All attributes    | The list of attributes to be serialized.    |
+| `options.relationships` | `Array`  | All relationships | The list of relationships to be serialized. |
+| `options.links`         | `Array`  |                   | Links to be serialized.                     |
+| `options.meta`          | `Array`  |                   | Meta information to be serialized.          |
 
-Returns: `Object`
+Returns: `object`
 
 JSON API-compliant object
 
-### Model#setAttribute(attrName, value)
+### Model#setAttribute(attributeName, value)
 
 Set/add an attribute to a model.
 
-| Property   | Type     | Description                 |
-| ---------- | -------- | --------------------------- |
-| `attrName` | `string` | The name of the attribute.  |
-| `value`    | `Object` | The value of the attribute. |
+| Property        | Type     | Description                 |
+| --------------- | -------- | --------------------------- |
+| `attributeName` | `string` | The name of the attribute.  |
+| `value`         | `*`      | The value of the attribute. |
 
-### Model#setRelationship(relName, models)
+### Model#setRelationship(relationshipName, models)
 
 Set/add a relationships to a model.
 
-| Property  | Type     | Description                   |
-| --------- | -------- | ----------------------------- |
-| `relName` | `string` | The name of the relationship. |
-| `models`  | `Object` | The linked model(s).          |
+| Property           | Type      | Description                   |
+| ------------------ | --------- | ----------------------------- |
+| `relationshipName` | `string`  | The name of the relationship. |
+| `models`           | `Model[]` | The linked model(s).          |
 
 ### Store#constructor()
 
@@ -258,9 +258,9 @@ Set/add a relationships to a model.
 
 Remove a model from the store.
 
-| Property | Type     | Description           |
-| -------- | -------- | --------------------- |
-| `model`  | `Object` | The model to destroy. |
+| Property | Type    | Description           |
+| -------- | ------- | --------------------- |
+| `model`  | `Model` | The model to destroy. |
 
 ### Store#find(type, id)
 
@@ -271,7 +271,7 @@ Retrieve a model by type and id. Constant-time lookup.
 | `type`   | `string` | The type of the model. |
 | `id`     | `string` | The id of the model.   |
 
-Returns: `Object`
+Returns: `?Model`
 
 The corresponding model if present, and null otherwise.
 
@@ -283,7 +283,7 @@ Retrieve all models by type.
 | -------- | -------- | ---------------------- |
 | `type`   | `string` | The type of the model. |
 
-Returns: `Object`
+Returns: `Model[]`
 
 Array of the corresponding model if present, and empty array otherwise.
 
@@ -291,18 +291,43 @@ Array of the corresponding model if present, and empty array otherwise.
 
 Empty the store.
 
+### Store#initModel(type, id)
+
+Initialize model.
+
+| Property | Type     | Description            |
+| -------- | -------- | ---------------------- |
+| `type`   | `string` | The type of the model. |
+| `id`     | `string` | The id of the model.   |
+
+Returns: `Model`
+
+New model.
+
+### Store#syncRecord(record)
+
+Sync object data to model.
+
+| Property | Type     | Description          |
+| -------- | -------- | -------------------- |
+| `record` | `object` | Record data to sync. |
+
+Returns: `Model`
+
+Corresponding synced model.
+
 ### Store#sync(data, opts)
 
 Sync a JSON API-compliant payload with the store and return any top level
 properties included in the payload.
 
-| Property        | Type      | Description                                     |
-| --------------- | --------- | ----------------------------------------------- |
-| `data`          | `Object`  | The JSON API payload.                           |
-| `opts`          | `Object`  | The options for sync.                           |
-| `opts.topLevel` | `boolean` | Return top level properties (default: `false`). |
+| Property           | Type      | Default | Description                  |
+| ------------------ | --------- | ------- | ---------------------------- |
+| `payload`          | `object`  |         | The JSON API payload.        |
+| `options`          | `object`  |         | The options for sync.        |
+| `options.topLevel` | `boolean` | `false` | Return top level properties. |
 
-Returns: `Object`
+Returns: `object`
 
 The model/array of models corresponding to the payload's primary resource(s) and
 any top level properties.
