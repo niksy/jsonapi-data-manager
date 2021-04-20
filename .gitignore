@@ -1,4 +1,10 @@
 .DS_Store
-components/
 node_modules/
-# dist/
+package-lock.json
+yarn.lock
+npm-debug.log
+local.log
+coverage/
+cjs/
+esm/
+!test/fixtures/node_modules/

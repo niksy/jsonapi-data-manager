@@ -1,0 +1,8 @@
+{
+	"extends": ["niksy/tests"],
+	"plugins": ["mocha"],
+	"rules": {
+		"mocha/valid-suite-description": 0
+	},
+	"ignorePatterns": ["/**/fixtures"]
+}
