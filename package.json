@@ -53,6 +53,7 @@
     "@rollup/plugin-babel": "^5.2.1",
     "@rollup/plugin-commonjs": "^15.1.0",
     "@rollup/plugin-node-resolve": "^9.0.0",
+    "babel-plugin-transform-es2017-object-entries": "0.0.5",
     "chai": "^4.3.4",
     "changelog-verify": "^1.1.2",
     "core-js": "^2.6.5",

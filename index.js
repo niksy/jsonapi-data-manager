@@ -1,7 +1,3 @@
-function hasOwnProperty_(object, key) {
-	return Object.prototype.hasOwnProperty.call(object, key);
-}
-
 class Model {
 	/**
 	 * @param {string} type
@@ -281,14 +277,13 @@ class Store {
 
 		delete model._placeHolder;
 
-		for (const key in record.attributes) {
-			if (hasOwnProperty_(record.attributes, key)) {
-				const attribute = record.attributes[key];
+		if (record.attributes) {
+			Object.entries(record.attributes).forEach(([key, attribute]) => {
 				if (model._attributes.indexOf(key) === -1) {
 					model._attributes.push(key);
 				}
 				model[key] = attribute;
-			}
+			});
 		}
 
 		if (record.links) {
@@ -300,9 +295,8 @@ class Store {
 		}
 
 		if (record.relationships) {
-			for (const key in record.relationships) {
-				if (hasOwnProperty_(record.relationships, key)) {
-					const relationship = record.relationships[key];
+			Object.entries(record.relationships).forEach(
+				([key, relationship]) => {
 					if (typeof relationship.data !== 'undefined') {
 						if (model._relationships.indexOf(key) === -1) {
 							model._relationships.push(key);
@@ -336,7 +330,7 @@ class Store {
 						model._relationshipMeta[key] = relationship.meta;
 					}
 				}
-			}
+			);
 		}
 
 		return model;
