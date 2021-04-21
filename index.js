@@ -341,7 +341,7 @@ class Store {
 	 * @param {object} options
 	 * @param {boolean} options.topLevel
 	 *
-	 * @returns {object}
+	 * @returns {Model|Model[]}
 	 */
 	sync(payload = {}, options = {}) {
 		const { data, meta, links, jsonapi, errors, included } = payload;
@@ -362,11 +362,6 @@ class Store {
 
 		if (typeof errors !== 'undefined') {
 			response.errors = errors;
-			return response;
-		}
-
-		if (typeof data === 'undefined') {
-			return [];
 		}
 
 		if (typeof included !== 'undefined') {
@@ -377,18 +372,19 @@ class Store {
 			}
 		}
 
-		if (typeof data !== 'undefined') {
+		if (typeof data !== 'undefined' && data !== null) {
 			if (Array.isArray(data)) {
 				response.data = data.map((record) => this.syncRecord(record));
 			} else {
 				response.data = this.syncRecord(data);
 			}
+		} else {
+			response.data = [];
 		}
 
-		if (topLevel) {
+		if (topLevel || typeof errors !== 'undefined') {
 			return response;
 		}
-
 		return response.data;
 	}
 }

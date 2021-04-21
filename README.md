@@ -327,10 +327,10 @@ properties included in the payload.
 | `options`          | `object`  |         | The options for sync.        |
 | `options.topLevel` | `boolean` | `false` | Return top level properties. |
 
-Returns: `object`
+Returns: `Model|Model[]`
 
-The model/array of models corresponding to the payload's primary resource(s) and
-any top level properties.
+The model or array of models corresponding to the payload's primary resource(s)
+and any top level properties.
 
 ## Browser support
 
