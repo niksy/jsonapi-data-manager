@@ -6,7 +6,8 @@
 Handle [JSON API][jsonapi] data.
 
 ⚠️ **Based on
-[`jsonapi-data-store`](https://github.com/beauby/jsonapi-datastore) module.**
+[`jsonapi-data-store`](https://github.com/beauby/jsonapi-datastore) module which
+is currently unmaintained.**
 
 The [JSON API][jsonapi] standard is great for exchanging data (which is its
 purpose), but the format is not ideal to work directly with in an application.
@@ -232,7 +233,7 @@ Serialize a model.
 
 Returns: `object`
 
-JSON API-compliant object
+JSON API-compliant object.
 
 ### Model#setAttribute(attributeName, value)
 
@@ -273,7 +274,7 @@ Retrieve a model by type and id. Constant-time lookup.
 
 Returns: `?Model`
 
-The corresponding model if present, and null otherwise.
+The corresponding model if present, and `null` otherwise.
 
 ### Store#findAll(type)
 
@@ -350,7 +351,7 @@ MIT © [Ivan Nikolić](http://ivannikolic.com)
 [ci]: https://travis-ci.com/niksy/jsonapi-data-manager
 [ci-img]: https://travis-ci.com/niksy/jsonapi-data-manager.svg?branch=master
 [browserstack]: https://www.browserstack.com/
-[browserstack-img]: https://www.browserstack.com/automate/badge.svg?badge_key=<badge_key>
+[browserstack-img]: https://www.browserstack.com/automate/badge.svg?badge_key=eDV0YitYd2FNR2FNamNDT0tuaGl0QmI3dFNwMkVVcVJUdmtVZ0lCZ0FlYz0tLTZQWUEvdERLS21tRmV3MWRJN0xWQUE9PQ==--465652cfc13a0b91e1905e1f65b6f11d791a9041
 [jsonapi]: https://jsonapi.org/
 
 <!-- prettier-ignore-end -->
