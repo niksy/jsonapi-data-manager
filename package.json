@@ -1,7 +1,6 @@
 {
   "name": "jsonapi-data-manager",
   "version": "1.0.0",
-  "private": true,
   "description": "Handle JSON API data.",
   "license": "MIT",
   "author": "Lucas Hosseini <lucas.hosseini@gmail.com>",
