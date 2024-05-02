@@ -1,20 +1,12 @@
 {
 	"root": true,
-	"extends": ["niksy", "niksy/next", "niksy/browser", "prettier"],
-	"plugins": ["prettier"],
+	"extends": [
+		"eslint-config-nitpick",
+		"eslint-config-nitpick/typescript",
+		"eslint-config-prettier"
+	],
+	"plugins": ["eslint-plugin-prettier"],
 	"rules": {
 		"prettier/prettier": 1
-	},
-	"overrides": [
-		{
-			"files": ["karma.conf.js", "rollup.config.js"],
-			"env": {
-				"node": true,
-				"es6": true
-			},
-			"rules": {
-				"no-console": 0
-			}
-		}
-	]
+	}
 }

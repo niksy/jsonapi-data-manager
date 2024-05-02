@@ -1,5 +1,5 @@
 {
-	"extends": ["niksy/tests"],
+	"extends": ["eslint-config-nitpick/tests"],
 	"plugins": ["mocha"],
 	"rules": {
 		"mocha/valid-suite-description": 0

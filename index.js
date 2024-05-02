@@ -1,150 +1,230 @@
+/* eslint-disable jsdoc/require-returns-type */
+
+/**
+ * @typedef {{[x: string]: any}} ExtendedModel
+ * @typedef {Model & ExtendedModel} IModel
+ *
+ * @typedef {import('./internal.ts').LinksObject} LinksObject
+ * @typedef {import('./internal.ts').Meta} Meta
+ * @typedef {import('./internal.ts').Linkage} Linkage
+ * @typedef {import('./internal.ts').Relationship} Relationship
+ */
+
 class Model {
+	/** @type {LinksObject} */
+	#links = {};
+
+	/** @type {Meta} */
+	#meta = {};
+
+	/** @type {string[]} */
+	#attributes = [];
+
+	/** @type {string[]} */
+	#relationships = [];
+
+	/** @type {{id: string, type: string, relation: string}[]} */
+	#dependents = [];
+
+	/** @type {{[x: string]: LinksObject}} */
+	#relationshipLinks = {};
+
+	/** @type {{[x: string]: Meta}} */
+	#relationshipMeta = {};
+
 	/**
-	 * @param {string} type
-	 * @param {string} id
+	 * @param {string} type The type of the model.
+	 * @param {string=} id The id of the model.
 	 */
 	constructor(type, id) {
 		this.id = id;
-		this._type = type;
-		this._attributes = [];
-		this._dependents = [];
-		this._relationships = [];
-		this._links = this.links = {};
-		this._relationshipLinks = {};
-		this._meta = this.meta = {};
-		this._relationshipMeta = {};
-		this._destroyed = false;
+		this.type = type;
+		this.links = this.#links;
+		this.meta = this.#meta;
 	}
 
 	/**
-	 * @param {string} type
-	 * @param {string} id
-	 * @param {string} key
+	 * Add a dependent to a model. Mostly used by stores.
+	 *
+	 * @param {string} type The type of the dependent model.
+	 * @param {string} id The id of the dependent model.
+	 * @param {string} relation The name of the relation found on the dependent model.
+	 *
+	 * @ignore
 	 */
-	_addDependence(type, id, key) {
-		const found = this._dependents.find((dependent) => {
-			return (
-				dependent.id === id &&
-				dependent.type === type &&
-				dependent.relation === key
-			);
-		});
-		if (typeof found === 'undefined') {
-			this._dependents.push({ id: id, type: type, relation: key });
+	addDependence(type, id, relation) {
+		const dependents = this.#dependents;
+		let found;
+		for (const dependent of dependents) {
+			if (dependent.id === id && dependent.type === type && dependent.relation === relation) {
+				found = dependent;
+				break;
+			}
+		}
+		if (!found) {
+			dependents.push({ id, type, relation });
 		}
 	}
 
 	/**
-	 * @param {string} type
-	 * @param {string} id
+	 * Removes a dependent from a model. Mostly used by stores.
+	 *
+	 * @param {string} type The type of the dependent model.
+	 * @param {string} id The id of the dependent model.
+	 *
+	 * @ignore
 	 */
-	_removeDependence(type, id) {
-		this._dependents.forEach((value, index) => {
-			if (value.id === id && value.type === type) {
-				this._dependents.splice(index, 1);
+	removeDependence(type, id) {
+		const dependents = this.#dependents;
+		for (const [index, dependent] of dependents.entries()) {
+			if (dependent.id === id && dependent.type === type) {
+				dependents.splice(index, 1);
 			}
-		});
+		}
 	}
 
 	/**
-	 * @param {string} type
-	 * @param {string} id
-	 * @param {string} relationshipName
+	 * Unlink dependent from model. Mostly used by stores.
+	 *
+	 * @param  {(dependent: {id: string, type: string, relation: string}) => ?Model} findModel
+	 *
+	 * @ignore
+	 */
+	unlinkDependence(findModel) {
+		const dependents = this.#dependents;
+		if (!this.id) {
+			return;
+		}
+		for (const dependent of dependents) {
+			// eslint-disable-next-line unicorn/no-array-method-this-argument
+			const dependentModel = findModel(dependent);
+			dependentModel?.removeRelationship(this.type, this.id, dependent.relation);
+		}
+	}
+
+	/**
+	 * Removes a relationship from a model.
+	 *
+	 * @param {string} type The type of the dependent model.
+	 * @param {string} id The id of the dependent model.
+	 * @param {string} relationshipName The name of the relationship.
+	 *
+	 * @this {IModel}
 	 */
 	removeRelationship(type, id, relationshipName) {
-		this._removeDependence(type, id);
-		if (Array.isArray(this[relationshipName])) {
-			this[relationshipName].forEach((value, index) => {
-				if (value.id === id && value._type === type) {
-					this[relationshipName].splice(index, 1);
+		this.removeDependence(type, id);
+
+		/** @type {Model|Model[]=}*/
+		const relationship = this[relationshipName];
+
+		if (Array.isArray(relationship)) {
+			for (const [index, model] of relationship.entries())
+				if (model.id === id && model.type === type) {
+					relationship.splice(index, 1);
 				}
-			});
-		} else if (this[relationshipName].id === id) {
+		} else if (relationship?.id === id) {
 			this[relationshipName] = null;
 		}
 	}
 
 	/**
-	 * @param {object} options
-	 * @param {Array} options.attributes
-	 * @param {Array} options.relationships
-	 * @param {Array} options.links
-	 * @param {Array} options.meta
-	 *
-	 * @returns {object}
+	 * @typedef {object} ModelSerializeOptions
+	 * @property {string[]=} attributes The list of attributes to be serialized. (Default: all attributes).
+	 * @property {string[]=} relationships The list of relationships to be serialized. (Default: all relationships).
+	 * @property {string[]=} links Links to be serialized.
+	 * @property {string[]=} meta Meta information to be serialized.
 	 */
-	serialize(options = {}) {
-		const relationshipIdentifier = (model) => {
-			return { type: model._type, id: model.id };
+
+	/**
+	 * Serialize a model.
+	 *
+	 * @param {ModelSerializeOptions=} options The options for serialization.
+	 *
+	 * @returns JSON API compliant object.
+	 *
+	 * @this {IModel}
+	 */
+	serialize(options) {
+		const relationshipIdentifier = (/** @type {Model}*/ model) => {
+			if (typeof model.id === 'undefined') {
+				return null;
+			}
+			return { type: model.type, id: model.id };
 		};
 
-		const response = { data: { type: this._type } };
+		const response = /** @type {JSONAPIDocument} */ ({});
+		response.data = /** @type {ResourceObject} */ ({});
+
+		response.data.type = this.type;
+
 		const {
-			attributes = this._attributes,
-			relationships = this._relationships,
+			attributes = this.#attributes,
+			relationships = this.#relationships,
 			links,
 			meta
-		} = options;
+		} = options ?? {};
 
 		if (typeof this.id !== 'undefined') {
 			response.data.id = this.id;
 		}
+
 		if (attributes.length !== 0) {
 			response.data.attributes = {};
+			for (const key of attributes) {
+				response.data.attributes[key] = this[key];
+			}
 		}
+
 		if (relationships.length !== 0) {
 			response.data.relationships = {};
+			for (const key of relationships) {
+				const relationship = /** @type {?Model|Model[]}*/ (this[key]);
+				const result = /** @type {Relationship}*/ ({});
+				if (!relationship) {
+					result.data = null;
+				} else if (Array.isArray(relationship)) {
+					/** @type {Linkage[]} */
+					const identifiers = [];
+					for (const relationshipModel of relationship) {
+						const identifier = relationshipIdentifier(relationshipModel);
+						if (identifier) {
+							identifiers.push(identifier);
+						}
+					}
+					result.data = identifiers;
+				} else {
+					result.data = relationshipIdentifier(relationship);
+				}
+				if (this.#relationshipLinks[key]) {
+					result.links = this.#relationshipLinks[key];
+				}
+				if (this.#relationshipMeta[key]) {
+					result.meta = this.#relationshipMeta[key];
+				}
+				response.data.relationships[key] = result;
+			}
 		}
 
-		attributes.forEach((key) => {
-			response.data.attributes[key] = this[key];
-		});
-
-		relationships.forEach((key) => {
-			if (!this[key]) {
-				response.data.relationships[key] = { data: null };
-			} else if (Array.isArray(this[key])) {
-				response.data.relationships[key] = {
-					data: this[key].map((relationship) =>
-						relationshipIdentifier(relationship)
-					)
-				};
-			} else {
-				response.data.relationships[key] = {
-					data: relationshipIdentifier(this[key])
-				};
-			}
-			if (this._relationshipLinks[key]) {
-				response.data.relationships[
-					key
-				].links = this._relationshipLinks[key];
-			}
-			if (this._relationshipMeta[key]) {
-				response.data.relationships[key].meta = this._relationshipMeta[
-					key
-				];
-			}
-		});
-
-		if (Object.keys(this._links).length !== 0) {
+		if (Object.keys(this.#links).length !== 0) {
 			if (typeof links === 'undefined') {
-				response.data.links = this._links;
+				response.data.links = this.#links;
 			} else if (Array.isArray(links) && links.length !== 0) {
 				response.data.links = {};
-				links.forEach((key) => {
-					response.data.links[key] = this._links[key];
-				});
+				for (const key of links) {
+					// @ts-ignore
+					response.data.links[key] = this.#links[key];
+				}
 			}
 		}
 
-		if (Object.keys(this._meta).length !== 0) {
+		if (Object.keys(this.#meta).length !== 0) {
 			if (typeof meta === 'undefined') {
-				response.data.meta = this._meta;
+				response.data.meta = this.#meta;
 			} else if (Array.isArray(meta) && meta.length !== 0) {
 				response.data.meta = {};
-				meta.forEach((key) => {
-					response.data.meta[key] = this._meta[key];
-				});
+				for (const key of meta) {
+					response.data.meta[key] = this.#meta[key];
+				}
 			}
 		}
 
@@ -152,23 +232,31 @@ class Model {
 	}
 
 	/**
-	 * @param {string} attributeName
-	 * @param {*} value
+	 * Set/add an attribute to a model.
+	 *
+	 * @param {string} attributeName The name of the attribute.
+	 * @param {any} value The value of the attribute.
+	 *
+	 * @this {IModel}
 	 */
 	setAttribute(attributeName, value) {
 		if (typeof this[attributeName] === 'undefined') {
-			this._attributes.push(attributeName);
+			this.#attributes.push(attributeName);
 		}
 		this[attributeName] = value;
 	}
 
 	/**
-	 * @param {string} relationshipName
-	 * @param {Model[]} models
+	 * Set/add a relationships to a model.
+	 *
+	 * @param {string} relationshipName The name of the relationship.
+	 * @param {Model|Model[]} models The linked model(s).
+	 *
+	 * @this {IModel}
 	 */
 	setRelationship(relationshipName, models) {
 		if (typeof this[relationshipName] === 'undefined') {
-			this._relationships.push(relationshipName);
+			this.#relationships.push(relationshipName);
 			this[relationshipName] = models;
 		} else if (Array.isArray(this[relationshipName])) {
 			this[relationshipName].push(models);
@@ -176,216 +264,244 @@ class Model {
 			this[relationshipName] = models;
 		}
 	}
-}
-
-class Store {
-	constructor() {
-		this.graph = {};
-		this.order = {};
-	}
 
 	/**
-	 * @param {Model} model
-	 */
-	destroy(model) {
-		model._destroyed = true;
-		model._dependents.forEach((dependent) => {
-			this.graph[dependent.type][dependent.id].removeRelationship(
-				model._type,
-				model.id,
-				dependent.relation
-			);
-		});
-		delete this.graph[model._type][model.id];
-		this.order[model._type].splice(
-			this.order[model._type].indexOf(model.id),
-			1
-		);
-	}
-
-	/**
-	 * @param {string} type
-	 * @param {string} id
+	 * Sync record data to model.
 	 *
-	 * @returns {?Model}
-	 */
-	find(type, id) {
-		if (!this.graph[type] || !this.graph[type][id]) {
-			return null;
-		}
-		return this.graph[type][id];
-	}
-
-	/**
-	 * @param {string} type
+	 * @param  {import('./internal.ts').Optional<ResourceObject, "id" | "type">} record Record data to sync.
+	 * @param  {(resource: ResourceObject|Linkage) => ?Model=} modelFactory Model factory.
 	 *
-	 * @returns {Model[]}
+	 * @this {IModel}
 	 */
-	findAll(type) {
-		if (!this.graph[type]) {
-			return [];
-		}
-		return this.order[type].map((modelId) => this.graph[type][modelId]);
-	}
-
-	reset() {
-		this.graph = {};
-		this.order = {};
-	}
-
-	/**
-	 * @param  {string} type
-	 * @param  {string} id
-	 *
-	 * @returns {Model}
-	 */
-	initModel(type, id) {
-		this.graph[type] = this.graph[type] || {};
-		this.order[type] = this.order[type] || [];
-		this.graph[type][id] = this.graph[type][id] || new Model(type, id);
-
-		const currentOrderIndex = this.order[type].indexOf(id);
-
-		if (currentOrderIndex === -1) {
-			this.order[type].push(id);
-		} else {
-			// Remove the id from the current order and add it to the bottom
-			this.order[type].splice(currentOrderIndex, 1);
-			this.order[type].push(id);
-		}
-		return this.graph[type][id];
-	}
-
-	/**
-	 * @param  {object} record
-	 *
-	 * @returns {Model}
-	 */
-	syncRecord(record) {
-		const model = this.initModel(record.type, record.id);
-
-		const findOrInit = (resource) => {
-			if (!this.find(resource.type, resource.id)) {
-				const placeHolderModel = this.initModel(
-					resource.type,
-					resource.id
-				);
-				placeHolderModel._placeHolder = true;
-			}
-			return this.graph[resource.type][resource.id];
-		};
-
-		delete model._placeHolder;
-
+	sync(record, modelFactory) {
 		if (record.attributes) {
-			Object.entries(record.attributes).forEach(([key, attribute]) => {
-				if (model._attributes.indexOf(key) === -1) {
-					model._attributes.push(key);
+			for (const [key, attribute] of Object.entries(record.attributes)) {
+				if (!this.#attributes.includes(key)) {
+					this.#attributes.push(key);
 				}
-				model[key] = attribute;
-			});
+				this[key] = attribute;
+			}
 		}
 
 		if (record.links) {
-			model._links = model.links = record.links;
+			this.#links = record.links;
+			this.links = this.#links;
 		}
 
 		if (record.meta) {
-			model._meta = model.meta = record.meta;
+			this.#meta = record.meta;
+			this.meta = this.#meta;
 		}
 
 		if (record.relationships) {
-			Object.entries(record.relationships).forEach(
-				([key, relationship]) => {
-					if (typeof relationship.data !== 'undefined') {
-						if (model._relationships.indexOf(key) === -1) {
-							model._relationships.push(key);
-						}
-						if (relationship.data === null) {
-							model[key] = null;
-						} else if (Array.isArray(relationship.data)) {
-							model[key] = relationship.data.map((relationship) =>
-								findOrInit(relationship)
-							);
-							model[key].forEach((record) => {
-								record._addDependence(
-									model._type,
-									model.id,
-									key
-								);
-							});
-						} else {
-							model[key] = findOrInit(relationship.data);
-							model[key]._addDependence(
-								model._type,
-								model.id,
-								key
-							);
-						}
+			modelFactory ??= (resource) => {
+				return new Model(resource.type, resource.id);
+			};
+			for (const [key, relationship] of Object.entries(record.relationships)) {
+				if (typeof relationship.data !== 'undefined') {
+					if (!this.#relationships.includes(key)) {
+						this.#relationships.push(key);
 					}
-					if (relationship.links) {
-						model._relationshipLinks[key] = relationship.links;
-					}
-					if (relationship.meta) {
-						model._relationshipMeta[key] = relationship.meta;
+					if (relationship.data === null) {
+						this[key] = null;
+					} else if (Array.isArray(relationship.data)) {
+						const relationshipModels = [];
+						for (const relation of relationship.data) {
+							const model = modelFactory(relation);
+							relationshipModels.push(model);
+						}
+						this[key] = relationshipModels;
+						for (const relationshipModel of relationshipModels) {
+							if (this.id) {
+								relationshipModel?.addDependence(this.type, this.id, key);
+							}
+						}
+					} else {
+						const relationshipModel = modelFactory(relationship.data);
+						this[key] = relationshipModel;
+						if (this.id) {
+							relationshipModel?.addDependence(this.type, this.id, key);
+						}
 					}
 				}
-			);
+				if (relationship.links) {
+					this.#relationshipLinks[key] = relationship.links;
+				}
+				if (relationship.meta) {
+					this.#relationshipMeta[key] = relationship.meta;
+				}
+			}
+		}
+	}
+}
+
+/** @typedef {import('./internal.ts').JSONAPIDocument} JSONAPIDocument */
+/** @typedef {import('./internal.ts').ResourceObject} ResourceObject */
+/** @typedef {import('./internal.ts').JsonApiObject} JsonApiObject */
+/** @typedef {import('./internal.ts').ErrorObject} ErrorObject */
+
+class Store {
+	/** @type {{[x: string]: {[x: string]: Model}}} */
+	#graph = {};
+
+	/** @type {{[x: string]: string[]}} */
+	#order = {};
+
+	/**
+	 * Remove a model from the store.
+	 *
+	 * @param {?Model} model The model to destroy.
+	 */
+	destroy(model) {
+		if (!model) {
+			return;
+		}
+		const typeInOrder = this.#order[model.type];
+		const typeInGraph = this.#graph[model.type];
+		if (typeof model.id === 'undefined') {
+			return;
+		}
+		model.unlinkDependence((dependent) => {
+			// eslint-disable-next-line unicorn/no-array-method-this-argument
+			return this.find(dependent.type, dependent.id);
+		});
+		delete typeInGraph?.[model.id];
+		typeInOrder?.splice(typeInOrder.indexOf(model.id), 1);
+	}
+
+	/**
+	 * Retrieve a model by type and id. Constant-time lookup.
+	 *
+	 * @param {string} type The type of the model.
+	 * @param {string} id The id of the model.
+	 *
+	 * @returns The corresponding model if present, and `null` otherwise.
+	 */
+	find(type, id) {
+		return this.#graph?.[type]?.[id] ?? null;
+	}
+
+	/**
+	 * Retrieve all models by type.
+	 *
+	 * @param {string} type The type of the model.
+	 *
+	 * @returns Array of the corresponding model if present, and empty array otherwise.
+	 */
+	findAll(type) {
+		const typeInOrder = this.#order[type];
+		const typeInGraph = this.#graph[type];
+		if (!typeInOrder) {
+			return [];
+		}
+		/** @type {Model[]}*/
+		const models = [];
+		for (const modelId of typeInOrder) {
+			const model = typeInGraph?.[modelId];
+			if (model) {
+				models.push(model);
+			}
+		}
+		return models;
+	}
+
+	/**
+	 * Empty the store.
+	 */
+	reset() {
+		delete this.meta;
+		delete this.links;
+		delete this.jsonapi;
+		delete this.errors;
+
+		this.#graph = {};
+		this.#order = {};
+	}
+
+	/**
+	 * Initialize model.
+	 *
+	 * @param  {string} type The type of the model.
+	 * @param  {string} id The id of the model.
+	 *
+	 * @returns New model.
+	 */
+	initModel(type, id) {
+		this.#graph[type] ??= {};
+		this.#order[type] ??= [];
+
+		const typeInGraph = this.#graph[type];
+		const typeInOrder = this.#order[type];
+
+		const model = typeInGraph?.[id] ?? new Model(type, id);
+
+		if (typeInGraph) {
+			typeInGraph[id] ??= model;
+		}
+		if (!typeInOrder) {
+			return model;
 		}
 
+		const currentOrderIndex = typeInOrder.indexOf(id);
+
+		if (currentOrderIndex === -1) {
+			typeInOrder.push(id);
+		} else {
+			// Remove the id from the current order and add it to the bottom
+			typeInOrder.splice(currentOrderIndex, 1);
+			typeInOrder.push(id);
+		}
 		return model;
 	}
 
 	/**
-	 * @param {object} payload
-	 * @param {object} options
-	 * @param {boolean} options.topLevel
+	 * Sync record data to model.
 	 *
-	 * @returns {Model|Model[]}
+	 * @param  {ResourceObject} record Record data to sync.
 	 */
-	sync(payload = {}, options = {}) {
-		const { data, meta, links, jsonapi, errors, included } = payload;
-		const { topLevel = false } = options;
-		const response = {};
+	syncRecord(record) {
+		/** @type {IModel} */
+		const model = this.initModel(record.type, record.id);
 
-		if (typeof meta !== 'undefined') {
-			response.meta = meta;
-		}
+		const findOrInit = (/** @type {ResourceObject|Linkage} */ resource) => {
+			// eslint-disable-next-line unicorn/no-array-method-this-argument
+			if (!this.find(resource.type, resource.id)) {
+				this.initModel(resource.type, resource.id);
+			}
+			// eslint-disable-next-line unicorn/no-array-method-this-argument
+			return this.find(resource.type, resource.id);
+		};
 
-		if (typeof links !== 'undefined') {
-			response.links = links;
-		}
+		model.sync(record, findOrInit);
+	}
 
-		if (typeof jsonapi !== 'undefined') {
-			response.jsonapi = jsonapi;
-		}
+	/**
+	 * Sync a JSON API-compliant payload with the store and store any top level
+	 * properties included in the payload.
+	 *
+	 * @param {JSONAPIDocument=} payload The JSON API payload.
+	 */
+	sync(payload) {
+		const { data, meta, links, jsonapi, errors, included } = payload ?? {};
 
-		if (typeof errors !== 'undefined') {
-			response.errors = errors;
-		}
+		this.meta = meta;
+		this.links = links;
+		this.jsonapi = jsonapi;
+		this.errors = errors;
 
-		if (typeof included !== 'undefined') {
-			if (Array.isArray(included)) {
-				included.forEach((record) => {
-					this.syncRecord(record);
-				});
+		if (Array.isArray(included)) {
+			for (const record of included) {
+				this.syncRecord(record);
 			}
 		}
 
-		if (typeof data !== 'undefined' && data !== null) {
-			if (Array.isArray(data)) {
-				response.data = data.map((record) => this.syncRecord(record));
-			} else {
-				response.data = this.syncRecord(data);
+		if (Array.isArray(data)) {
+			for (const record of data) {
+				this.syncRecord(record);
 			}
-		} else {
-			response.data = [];
+		} else if (data) {
+			this.syncRecord(data);
 		}
-
-		if (topLevel || typeof errors !== 'undefined') {
-			return response;
-		}
-		return response.data;
 	}
 }
 

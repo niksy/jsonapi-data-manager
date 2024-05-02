@@ -3,8 +3,7 @@ node_modules/
 package-lock.json
 yarn.lock
 npm-debug.log
-local.log
+.nyc_output/
 coverage/
-cjs/
-esm/
+types/
 !test/fixtures/node_modules/
