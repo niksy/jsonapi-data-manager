@@ -32,6 +32,8 @@ npm install jsonapi-data-manager --save
 
 ## Usage
 
+[**Full documentation**](https://niksy.github.io/jsonapi-data-manager/)
+
 `Store` and `Model` classes are available as named exports.
 
 ```js
