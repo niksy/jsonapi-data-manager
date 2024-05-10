@@ -225,7 +225,7 @@ class Model {
 	 * Set/add a relationships to a model.
 	 *
 	 * @param {string} relationshipName The name of the relationship.
-	 * @param {Model|Model[]} models The linked model(s).
+	 * @param {?Model|Model[]} models The linked model(s).
 	 *
 	 * @this {IModel}
 	 */
@@ -276,10 +276,7 @@ class Model {
 	sync(record, modelFactory) {
 		if (record.attributes) {
 			for (const [key, attribute] of Object.entries(record.attributes)) {
-				if (!this.#attributes.includes(key)) {
-					this.#attributes.push(key);
-				}
-				this[key] = attribute;
+				this.setAttribute(key, attribute);
 			}
 		}
 
@@ -298,19 +295,19 @@ class Model {
 				return new Model(resource.type, resource.id);
 			};
 			for (const [key, relationship] of Object.entries(record.relationships)) {
+				let relationshipValue;
 				if (typeof relationship.data !== 'undefined') {
-					if (!this.#relationships.includes(key)) {
-						this.#relationships.push(key);
-					}
 					if (relationship.data === null) {
-						this[key] = null;
+						relationshipValue = null;
 					} else if (Array.isArray(relationship.data)) {
 						const relationshipModels = [];
 						for (const relation of relationship.data) {
 							const model = modelFactory(relation);
-							relationshipModels.push(model);
+							if (model) {
+								relationshipModels.push(model);
+							}
 						}
-						this[key] = relationshipModels;
+						relationshipValue = relationshipModels;
 						for (const relationshipModel of relationshipModels) {
 							if (this.id) {
 								relationshipModel?.addDependence(this.type, this.id, key);
@@ -318,11 +315,12 @@ class Model {
 						}
 					} else {
 						const relationshipModel = modelFactory(relationship.data);
-						this[key] = relationshipModel;
+						relationshipValue = relationshipModel;
 						if (this.id) {
 							relationshipModel?.addDependence(this.type, this.id, key);
 						}
 					}
+					this.setRelationship(key, relationshipValue);
 				}
 				if (relationship.links) {
 					this.#relationshipLinks[key] = relationship.links;
