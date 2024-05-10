@@ -103,6 +103,65 @@ class Model {
 	}
 
 	/**
+	 * Set/add an attribute to a model.
+	 *
+	 * @param {string} attributeName The name of the attribute.
+	 * @param {any} value The value of the attribute.
+	 *
+	 * @this {IModel}
+	 */
+	setAttribute(attributeName, value) {
+		if (typeof this[attributeName] === 'undefined') {
+			this.#attributes.push(attributeName);
+		}
+		this[attributeName] = value;
+	}
+
+	/**
+	 * Set/add a relationships to a model.
+	 *
+	 * @param {string} relationshipName The name of the relationship.
+	 * @param {?Model|Model[]} models The linked model(s).
+	 *
+	 * @this {IModel}
+	 */
+	setRelationship(relationshipName, models) {
+		if (typeof this[relationshipName] === 'undefined') {
+			this.#relationships.push(relationshipName);
+		}
+		if (Array.isArray(this[relationshipName])) {
+			this[relationshipName].push(models);
+		} else {
+			this[relationshipName] = models;
+		}
+	}
+
+	/**
+	 * Removes a relationship from a model.
+	 *
+	 * @param {string} type The type of the dependent model.
+	 * @param {string} id The id of the dependent model.
+	 * @param {string} relationshipName The name of the relationship.
+	 *
+	 * @this {IModel}
+	 */
+	removeRelationship(type, id, relationshipName) {
+		this.removeDependence(type, id);
+
+		/** @type {Model|Model[]=}*/
+		const relationship = this[relationshipName];
+
+		if (Array.isArray(relationship)) {
+			for (const [index, model] of relationship.entries())
+				if (model.id === id && model.type === type) {
+					relationship.splice(index, 1);
+				}
+		} else if (relationship?.id === id) {
+			this[relationshipName] = null;
+		}
+	}
+
+	/**
 	 * @typedef {object} ModelSerializeOptions
 	 * @property {string[]=} attributes The list of attributes to be serialized. (Default: all attributes).
 	 * @property {string[]=} relationships The list of relationships to be serialized. (Default: all relationships).
@@ -204,65 +263,6 @@ class Model {
 		}
 
 		return response;
-	}
-
-	/**
-	 * Set/add an attribute to a model.
-	 *
-	 * @param {string} attributeName The name of the attribute.
-	 * @param {any} value The value of the attribute.
-	 *
-	 * @this {IModel}
-	 */
-	setAttribute(attributeName, value) {
-		if (typeof this[attributeName] === 'undefined') {
-			this.#attributes.push(attributeName);
-		}
-		this[attributeName] = value;
-	}
-
-	/**
-	 * Set/add a relationships to a model.
-	 *
-	 * @param {string} relationshipName The name of the relationship.
-	 * @param {?Model|Model[]} models The linked model(s).
-	 *
-	 * @this {IModel}
-	 */
-	setRelationship(relationshipName, models) {
-		if (typeof this[relationshipName] === 'undefined') {
-			this.#relationships.push(relationshipName);
-		}
-		if (Array.isArray(this[relationshipName])) {
-			this[relationshipName].push(models);
-		} else {
-			this[relationshipName] = models;
-		}
-	}
-
-	/**
-	 * Removes a relationship from a model.
-	 *
-	 * @param {string} type The type of the dependent model.
-	 * @param {string} id The id of the dependent model.
-	 * @param {string} relationshipName The name of the relationship.
-	 *
-	 * @this {IModel}
-	 */
-	removeRelationship(type, id, relationshipName) {
-		this.removeDependence(type, id);
-
-		/** @type {Model|Model[]=}*/
-		const relationship = this[relationshipName];
-
-		if (Array.isArray(relationship)) {
-			for (const [index, model] of relationship.entries())
-				if (model.id === id && model.type === type) {
-					relationship.splice(index, 1);
-				}
-		} else if (relationship?.id === id) {
-			this[relationshipName] = null;
-		}
 	}
 
 	/**
